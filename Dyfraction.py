@@ -55,6 +55,8 @@ class Difraction:
         -------
         e : float
             Интенсивность в точке наблюдения P.
+        default_e: float
+            Интенсивность в точке наблюдения P, как результат действия маленького прямоугольного участка отверстия
 
         '''
         e = 0
@@ -101,6 +103,7 @@ class Difraction:
                 # alpha и beta в формулах
                 alpha = np.pi * self.pixel_len * s_x / self.Lambda
                 beta = np.pi * self.pixel_len * s_y / self.Lambda
+                #используем первый замечательный предел
                 if alpha == 0:
                     a_s = 1
                 else:
