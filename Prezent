@@ -1,0 +1,385 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[a4paper,top=1.3cm,bottom=2cm,left=1.5cm,right=1.5cm,marginparwidth=0.75cm]{geometry}
+\usepackage{setspace}
+\usepackage{cmap}					
+\usepackage{mathtext} 				
+\usepackage[T2A]{fontenc}			
+\usepackage[utf8]{inputenc}			
+\usepackage[english,russian]{babel}
+\usepackage{multirow}
+\usepackage{graphicx}
+\usepackage{wrapfig}
+\usepackage{tabularx}
+\usepackage{float}
+\usepackage{longtable}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,urlcolor=blue}
+\usepackage[rgb]{xcolor}
+\usepackage{amsmath,amsfonts,amssymb,amsthm,mathtools} 
+\usepackage{icomma} 
+\mathtoolsset{showonlyrefs=true}
+\usepackage{euscript}
+\usepackage{mathrsfs}
+\usepackage{xcolor}
+\usepackage{hyperref}
+
+ % Цвета для гиперссылок
+\definecolor{linkcolor}{HTML}{799B03} % цвет ссылок
+\definecolor{urlcolor}{HTML}{799B03} % цвет гиперссылок
+
+\hypersetup{pdfstartview=FitH,  linkcolor=linkcolor,urlcolor=urlcolor, colorlinks=true}
+
+\DeclareFixedFont{\ttb}{T1}{txtt}{bx}{n}{12} % for bold
+\DeclareFixedFont{\ttm}{T1}{txtt}{m}{n}{12}  % for normal
+
+\usepackage{listings}
+\usepackage{color}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\definecolor{deepblue}{rgb}{0,0,0.5}
+\definecolor{deepred}{rgb}{0.6,0,0}
+\definecolor{deepgreen}{rgb}{0,0.5,0}
+
+\lstset{frame=tb,
+  extendedchars=\true,
+  language=Java,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  morekeywords={self}, 
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  backgroundcolor=\color{backcolour},
+  emph={def, as, for, and, or, return, import, in, class, if, elif},          % Custom highlighting
+  emphstyle=\ttb,    % Custom highlighting style
+  breaklines=true,
+  keepspaces=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
+
+\DeclareMathOperator{\sgn}{\mathop{sgn}}
+\newcommand*{\hm}[1]{#1\nobreak\discretionary{}
+	{\hbox{$\mathsurround=0pt #1$}}{}}
+
+
+\title{\textbf{Моделирование дифракции на отверстии произвольной формы}}
+\author{Исмагилов Амир, Куцубин Савва, Мельников Михаил \\ 
+Группа Б02-201}
+\date{\today}
+
+
+\begin{document}
+\maketitle
+
+\section*{\hfil Краткое описасние к описанию\hfil}
+\indent Целью нашего проекта является моделирование дифракции Фраунгофера на отверстии произвольной формы. В предоставленном вашему вниманию тексте будут описанны используемые нами методы для вычисления интенсивности электромагнитного излучения в каждой точке рассматриваемой части экрана где наблюдается диффракция, так же будет показано как осуществляется загрузка файла содержащего необходимую информацию об отверстии на котором наблюдается дифракция.
+
+
+
+
+\section{class Diffraction}
+\subsection{center\_of\_mass}
+\newline\indent Сначала предлагается рассмотреть функцию center\_of\_mass. Которая определяет геометрический центр отверстия, считающийся точкой с нулевой фазой. Фактически центр масс вычисляется по формуле
+\begin{equation}
+    \vec r_c= \frac{\sum \limits_i m_i \vec r_i}{\sum \limits_i m_i}
+\end{equation}
+если наделить каждый пиксель принадлежащий отверстию единичной массой. Ниже приведён текст соответствующей функции.
+\begin{lstlisting}
+    def center_of_mass(self):
+        x_rel = 0
+        y_rel = 0
+        num_of_cells = 0
+        for i in range(self.grid_size):
+            for j in range(self.grid_size):
+                if self.matrix[i][j] == 0:
+                    x_rel += i
+                    y_rel += j
+                    num_of_cells += 1
+        x_rel /= num_of_cells
+        y_rel /= num_of_cells
+        return (x_rel, y_rel)
+\end{lstlisting}
+Прежде чем приступить к изложению сущности двух следующих функций следует отметить, что для расчета интенсивности удобно разбить отверстие на множество квадратов и считать создаваемую ими напряженность в некоторой точке, а уже потом посредством суммирования получить искомую напряженность в рассматриваемой точке экрана.
+\subsection{calc\_intensity}
+Функция calc\_intensity делает то, что написано в её описании, используя формулу для расчета напряженности создаваемой единицой площади отверстия (прямоугольником) содержащей геометрический центр отверстия.
+\begin{equation}
+    E = \int\limits_{-a/2}^{a/2}\int\limits_{-b/2}^{b/2}e^{ik(s_xx + s_yy)}dxdy = ab\frac{\sin{\alpha}}{\alpha}\frac{\sin{\beta}}{\beta}, \; \alpha = \frac{1}{2}kas_x,\; \beta = \frac{1}{2}kbs_y.
+\end{equation}
+$s_{x}$ - Проекция единичного вектора направления дифрагированного пучка на ось $OX$
+\newline $s_{y}$ - Проекция единичного вектора направления дифрагированного пучка на ось $OY$
+\newline $x_{rel}$ - координата геометрического центра отверстия (определяется как точка с нулевой начальной фазой).
+\newline $y_{rel}$ - координата геометрического центра отверстия (определяется как точка с нулевой начальной фазой).
+\newline $a,b$ - длины сторон прямоугольника 
+\begin{lstlisting}
+    def calc_intensity(self):
+        '''
+        Подсчет интенсивности результирующего излучения в наблюдаемой точке.
+        Заполняет матрицу color_grid_matrix значениями, соответствующими
+        значениям интенсивности в соответствующей точке экрана.
+        Returns
+        -------
+        None.
+        '''
+        # Подсчет положения центра масс отверстия
+        x_rel, y_rel = self.center_of_mass()
+
+        for i in tqdm(range(self.color_grid_size)):
+            for j in range(self.color_grid_size):
+                # Нахождение проекций вектора направления распространения
+                # дифрагированного пучка
+                s_x = (i - self.color_grid_size / 2) *\
+                    self.pixel_len * self.scale
+                s_y = (j - self.color_grid_size / 2) *\
+                    self.pixel_len * self.scale
+
+                # Модуль вектора направления распространения
+                ro = np.sqrt(s_x**2 + s_y**2 + self.L**2)
+
+                # Конечные значения проекций единичного вектора
+                s_x /= ro
+                s_y /= ro
+
+                # alpha и beta в формулах
+                alpha = np.pi * self.pixel_len * s_x / self.Lambda
+                beta = np.pi * self.pixel_len * s_y / self.Lambda
+                if alpha == 0:
+                    a_s = 1
+                else:
+                    a_s = np.sin(alpha) / alpha
+
+                if beta == 0:
+                    b_s = 1
+                else:
+                    b_s = np.sin(beta) / beta
+
+                d = self.pixel_len
+                default_e = d**2 * a_s * b_s
+
+                # Суммарная интенсивность в каждой точке экрана
+                self.color_matrix[self.color_grid_size - j - 1][i] = \
+                    self.summing_tension(s_x, s_y, default_e, x_rel, y_rel)
+\end{lstlisting}
+\subsection{summing\_tension}
+Функция summing\_tension находит интенсивность поля в рассматриваемой точке, используя для этого следующую формулу:
+\begin{equation}
+    E(\textbf{s}) = \int\limits_{\Omega}e^{ik(\textbf{sr})}dF
+\end{equation}
+\begin{lstlisting}
+    def summing_tension(self, s_x, s_y, default_e, x_rel, y_rel):
+        '''
+        Находит интенсивность поля в рассматриваемой точке
+        Parameters
+        ----------
+        s_x : float
+            Проекция единичного вектора направления дифрагированного пучка
+            на ось 0X.
+        s_y : float
+            Проекция единичного вектора направления дифрагированного пучка
+            на ось 0Y..
+        default_e : float
+            Коэффициент
+        x_rel : float
+            x - координата геометрического центра отверстия
+            (определяется как точка с нулевой начальной фазой).
+        y_rel : float
+            y - координата геометрического центра отверстия
+            (определяется как точка с нулевой начальной фазой).
+        Returns
+        -------
+        e : float
+            Интенсивность в точке наблюдения P.
+        '''
+        e = 0
+        for i in range(self.grid_size):
+            for j in range(self.grid_size):
+                if self.matrix[i][j] == 0:
+                    x_c = (i - x_rel) * self.pixel_len
+                    y_c = (j - y_rel) * self.pixel_len
+                    e += default_e * \
+                        np.cos((x_c * s_x + y_c * s_y)
+                               * 2 * np.pi/self.Lambda)
+        return abs(e)
+\end{lstlisting}
+
+
+\section{Часть программы отвечающая за загрузку файла}
+Импортируем библиотеки и проверяем файл на корректность.
+\begin{lstlisting}
+import matplotlib.pyplot as plt
+import numpy as np
+
+
+def error_incorrect_file():
+    print('Файл BMP некорректный')
+    return 0
+
+
+def error_bigsize():
+    print('Файл слишком большой')
+    return 0
+\end{lstlisting}
+
+Основная часть:
+\begin{lstlisting}
+def LoadBMP(filename):
+    '''
+    == ОПИСАНИЕ ФУНКЦИИ ==
+    Функция получает имя файла формата BMP: filename.
+    Возвращает (w, h, pixels), где w - ширина, h - высота массива,
+        pixels - целочисленный массив numpy, содержащий только 0 или 1.
+    Файл BMP должен быть несжатым.
+    Каждый пиксель должен принимать значение (0, 0, 0) или (255, 255, 255).
+    (0, 0, 0) переводится в 0 в массив numpy, (255, 255, 255) - в 1.
+    В случае, если размеры файла превышают HMAX и WMAX, вызывается функция
+    error_bigsize(). Если она возвращает 0, то LoadBMP() завершает работу и
+    возвращает (0, 0, 0), в противном случае инчего не происходит.
+    В случае, если файл не соответствует указанным выше требованиям
+    или он повреждён, вызывается функция error_incorrect_file()
+    и функция LoadBMP возвращает (0, 0, 0).
+    '''
+
+    HMAX = 1000
+    WMAX = 1000
+
+    header = np.zeros(27, 'int')
+
+    file = open(filename, "rb")
+
+    % Читаем заголовок файла (из полезной информации там w и h)
+    for i in range(27):
+        a = int.from_bytes(file.read(1), 'little')
+        b = int.from_bytes(file.read(1), 'little')
+        header[i] = b * 256 + a
+
+    # Проверка корректности файла(несжатый, RGB, 8 бит на цвет и мб что-то ещё)
+    if (header[0] != 19778
+            or header[5] != 54
+            or header[7] != 40
+            or header[13] != 1
+            or header[14] != 24):
+        file.close()
+        error_incorrect_file()
+        return (0, 0, 0)
+
+    w = header[9]  # ширина
+    h = header[11]  # высота
+    d = w % 4  # количество пустых байт, дополняющих каждую строку в конце
+
+    # Проверка размера файла
+    if (w >= WMAX or h >= HMAX):
+        if (error_bigsize() == 0):
+            file.close()
+            return (0, 0, 0)
+
+    # Массив, где будет храниться картинка
+    pixels = np.zeros((h, w), 'int')
+
+    # Массив под 3 байта R, G, B
+    pixel = [30] * 3
+
+    for i in range(h):
+        for j in range(w):
+            for c in range(3):
+                # Считываем один пиксель
+                pixel[c] = int.from_bytes(file.read(1), 'little')
+
+    # Записысаем подходящее значение в файл, проверяя соответствие формату
+            if (pixel[0] == pixel[1] and pixel[1] == pixel[2]):
+                if (pixel[0] == 0):
+                    pixels[h - i - 1][j] = 0
+                elif (pixel[0] == 255):
+                    pixels[h - i - 1][j] = 1
+                else:
+                    file.close()
+                    error_incorrect_file()
+                    return (0, 0, 0)
+            else:
+                file.close()
+                error_incorrect_file()
+                return (0, 0, 0)
+
+        # Пропускаем пустые байты
+        if d != 0:
+            for i in range(d):
+                file.read(1)
+
+    file.close()
+    return(w, h, pixels)
+    # Конец функции LoadBMP()
+\end{lstlisting}
+
+
+
+\section{Загружаем конкретный файл и получаем дифракционную картину}
+\begin{lstlisting}
+# Обработка файла
+h, w, points = LoadBMP('C:/Проект/img.bmp')
+
+# Параметры
+DifractionPicture = Difraction()
+DifractionPicture.grid_size = h
+
+# Четкость выходной картинки(рекомендуется ставить значения 150, 300 или 600)
+DifractionPicture.color_grid_size = 150
+# Масштаб дифракционной картины (рекомендуемые значения: от 1 до 60)
+DifractionPicture.scale = 60
+
+DifractionPicture.matrix = points
+DifractionPicture.color_matrix = np.zeros(
+    (DifractionPicture.color_grid_size, DifractionPicture.color_grid_size))
+DifractionPicture.L = 2 * 10 ** 5
+DifractionPicture.Lambda = 5
+DifractionPicture.pixel_len = 10
+
+# Подсчет интенсивности
+DifractionPicture.calc_intensity()
+
+# График matplotlib
+fig, ax = plt.subplots(figsize=(10, 10))
+ax.imshow(DifractionPicture.color_matrix, 'hot')
+\end{lstlisting}
+
+\section{Примеры}
+\subsection{}
+\begin{figure}[H]
+		\begin{center}
+			\includegraphics[scale = 4.7]{img2.png}
+		\end{center}
+\end{figure}
+\begin{figure}[H]
+		\begin{center}
+			\includegraphics[scale = 0.66]{Diff1.png}
+		\end{center}
+\end{figure}
+
+\subsection{}
+\begin{figure}[H]
+		\begin{center}
+			\includegraphics[scale = 5]{img3.png}
+		\end{center}
+\end{figure}
+\begin{figure}[H]
+		\begin{center}
+			\includegraphics[scale = 0.66]{Diff2.png}
+		\end{center}
+\end{figure}
+
+\subsection{}
+\begin{figure}[H]
+		\begin{center}
+			\includegraphics[scale = 5]{img4.png}
+		\end{center}
+\end{figure}
+\begin{figure}[H]
+		\begin{center}
+			\includegraphics[scale = 0.66]{Diff3.png}
+		\end{center}
+\end{figure}
+
+
+\end{document}
