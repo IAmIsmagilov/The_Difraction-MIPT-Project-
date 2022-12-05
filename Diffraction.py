@@ -143,11 +143,11 @@ class Diffraction:
 
 
 # Обработка файла
-h, w, points = LoadBMP('blackpicture.bmp')
+h, w, points = LoadBMP('circlehole3.bmp')
 
 # DiffractionPicture = Diffraction(points, h, w, 150, 60, 0.555, 2 * 10**6, 10)
 DiffractionPicture = Diffraction(
-    points, h, w, 150, 0.555, 2 * 10**6, 100, 100)
+    points, h, w, 50, 0.555, 2 * 10**6, 100, 100)
 
 # Подсчет интенсивности
 DiffractionPicture.calc_intensity()
@@ -169,7 +169,7 @@ axs[0].set_xticklabels(np.linspace((-DiffractionPicture.color_grid_size/2) *
                                    DiffractionPicture.pixel_len_diff,
                                    DiffractionPicture.color_grid_size/2 *
                                    DiffractionPicture.pixel_len_diff,
-                                   11), fontsize=13)
+                                   11), fontsize=15)
 axs[0].set_yticks(np.linspace(0,
                               DiffractionPicture.color_grid_size,
                               11))
@@ -178,14 +178,14 @@ axs[0].set_yticklabels(np.linspace((-DiffractionPicture.color_grid_size/2) *
                                    DiffractionPicture.pixel_len_diff,
                                    DiffractionPicture.color_grid_size/2 *
                                    DiffractionPicture.pixel_len_diff,
-                                   11), fontsize=13)
+                                   11), fontsize=15)
 axs[1].set_xticks(np.linspace(0,
                               DiffractionPicture.color_grid_size, 11))
 axs[1].set_xticklabels(np.linspace((-DiffractionPicture.color_grid_size/2) *
                                    DiffractionPicture.pixel_len_diff,
                                    DiffractionPicture.color_grid_size/2 *
                                    DiffractionPicture.pixel_len_diff,
-                                   11), fontsize=13)
+                                   11), fontsize=15)
 
 axs[1].set_yticks(np.linspace(0,
                               DiffractionPicture.color_grid_size,
@@ -194,4 +194,14 @@ axs[1].set_yticklabels(np.linspace((-DiffractionPicture.color_grid_size/2) *
                                    DiffractionPicture.pixel_len_diff,
                                    DiffractionPicture.color_grid_size/2 *
                                    DiffractionPicture.pixel_len_diff,
-                                   11), fontsize=13)
+                                   11), fontsize=15)
+axs[0].set_title(
+    'Дифракционная картинка, построенная с помощью функции imshow', fontsize=20)
+axs[1].set_title(
+    'Дифракционная картинка, построенная с помощью функции contourf', fontsize=20)
+
+axs[0].set_xlabel('x, мкм', fontsize=17)
+axs[0].set_ylabel('y, мкм', fontsize=17)
+axs[1].set_xlabel('x, мкм', fontsize=17)
+axs[1].set_ylabel('y, мкм', fontsize=17)
+
