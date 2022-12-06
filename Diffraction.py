@@ -1,11 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from tqdm import tqdm
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, 
+                                               NavigationToolbar2Tk)
 from BMP import*
 
 
 class Diffraction:
-    def __init__(self, matrix, h, w, diff_grid_size, Lambda, dist, pixel_len, pixel_len_diff):
+    def __init__(self, matrix, h, w, diff_grid_size, Lambda, dist, pixel_len, pixel_len_diff, progress_bar, window):
         # Размер исходной картинки в пикселях
         self.h = h  # Высота
         self.w = w  # Ширина
@@ -24,24 +26,25 @@ class Diffraction:
         self.pixel_len_diff = pixel_len_diff
         # Длина волны в микрометрах
         self.Lambda = Lambda
+        
+        self.progress_bar = progress_bar
+        self.window = window
 
     def center_of_mass(self):
         '''
         Находит расположение центра масс отверстия
-
         Returns
         -------
         x_c : float
             x-координата центра отверстия.
         y_c : float
             y-координата центра отверстия.
-
         '''
         x_c = 0
         y_c = 0
         num_of_cells = 0
-        for i in range(self.w):
-            for j in range(self.h):
+        for i in range(self.h):
+            for j in range(self.w):
                 if self.matrix[i][j] == 0:
                     x_c += i
                     y_c += j
@@ -53,7 +56,6 @@ class Diffraction:
     def summing_tension(self, s_x, s_y, E_0, x_c, y_c):
         '''
         Находит интенсивность поля в рассматриваемой точке
-
         Parameters
         ----------
         s_x : float
@@ -70,7 +72,6 @@ class Diffraction:
         y_c : float
             y - координата геометрического центра отверстия
             (определяется как точка с нулевой начальной фазой).
-
         Returns
         -------
         E : float
@@ -79,11 +80,10 @@ class Diffraction:
         результат, а сделано в целях оптимизации и получения хорошей
         дифракционной картинки (интенсивность к краям при возведении в
         квадрат быстро убывает)).
-
         '''
         E = 0
-        for i in range(self.w):
-            for j in range(self.h):
+        for i in range(self.h):
+            for j in range(self.w):
                 if self.matrix[i][j] == 0:
                     x = (i - x_c) * self.pixel_len
                     y = (j - y_c) * self.pixel_len
@@ -97,15 +97,15 @@ class Diffraction:
         Подсчет интенсивности результирующего излучения в наблюдаемой точке.
         Заполняет матрицу color_matrix значениями, соответствующими
         значениям интенсивности в соответствующей точке экрана.
-
         Returns
         -------
         None.
-
         '''
         # Подсчет положения центра масс отверстия
         x_c, y_c = self.center_of_mass()
-        for i in tqdm(range(self.color_grid_size)):
+        for i in range(self.color_grid_size):
+            self.progress_bar.step(i / self.color_grid_size)
+            self.window.update()
             for j in range(self.color_grid_size):
                 # Нахождение проекций вектора направления распространения
                 # дифрагированного пучка
@@ -142,64 +142,45 @@ class Diffraction:
                     self.summing_tension(s_x, s_y, E_0, x_c, y_c)
 
 
-# Обработка файла
-h, w, points = LoadBMP('circleholeexperiment2.bmp')
+'''# Обработка файла
+h, w, points = LoadBMP('circlehole3.bmp')
 
 # DiffractionPicture = Diffraction(points, h, w, 150, 60, 0.555, 2 * 10**6, 10)
 DiffractionPicture = Diffraction(
-    points, h, w, 150, 0.555, 2 * 10**6, 100, 25)
+    points, h, w, 50, 0.555, 2 * 10**6, 100, 100)
 
 # Подсчет интенсивности
-DiffractionPicture.calc_intensity()
+DiffractionPicture.calc_intensity()'''
 
 # График matplotlib
-fig, axs = plt.subplots(1, 2, figsize=(35, 15), constrained_layout=True)
-p1 = axs[0].imshow(DiffractionPicture.color_matrix,
-                   cmap='hot')
-fig.colorbar(p1, ax=axs[0])
-
-p2 = axs[1].contourf(DiffractionPicture.color_matrix,
-                     levels=500,
-                     cmap='hot')
-fig.colorbar(p2, ax=axs[1])
-
-axs[0].set_xticks(np.linspace(0,
-                              DiffractionPicture.color_grid_size, 11))
-axs[0].set_xticklabels(np.linspace((-DiffractionPicture.color_grid_size/2000) *
-                                   DiffractionPicture.pixel_len_diff,
-                                   DiffractionPicture.color_grid_size/2000 *
-                                   DiffractionPicture.pixel_len_diff,
-                                   11), fontsize=9)
-axs[0].set_yticks(np.linspace(0,
-                              DiffractionPicture.color_grid_size,
-                              11))
-
-axs[0].set_yticklabels(np.linspace((-DiffractionPicture.color_grid_size/2000) *
-                                   DiffractionPicture.pixel_len_diff,
-                                   DiffractionPicture.color_grid_size/2000 *
-                                   DiffractionPicture.pixel_len_diff,
-                                   11), fontsize=9)
-axs[1].set_xticks(np.linspace(0,
-                              DiffractionPicture.color_grid_size, 11))
-axs[1].set_xticklabels(np.linspace((-DiffractionPicture.color_grid_size/2000) *
-                                   DiffractionPicture.pixel_len_diff,
-                                   (DiffractionPicture.color_grid_size/2000) *
-                                   DiffractionPicture.pixel_len_diff,
-                                   11), fontsize=9)
-
-axs[1].set_yticks(np.linspace(0,
-                              DiffractionPicture.color_grid_size,
-                              11))
-axs[1].set_yticklabels(np.linspace((-DiffractionPicture.color_grid_size/2000) *
-                                   DiffractionPicture.pixel_len_diff,
-                                   (DiffractionPicture.color_grid_size/2000) *
-                                   DiffractionPicture.pixel_len_diff,
-                                   11), fontsize=9)
-axs[0].set_title(
-    'Дифракционная картинка, построенная с помощью функции imshow', fontsize=20)
-axs[1].set_title(
-    'Дифракционная картинка, построенная с помощью функции contourf', fontsize=20)
-axs[0].set_xlabel('x, мкм', fontsize=17)
-axs[0].set_ylabel('y, мкм', fontsize=17)
-axs[1].set_xlabel('x, мкм', fontsize=17)
-axs[1].set_ylabel('y, мкм', fontsize=17)
+def PlotDiffImg( DiffractionPicture ):
+    fig = Figure(figsize = (4, 4), dpi = 100)
+    plot = fig.add_subplot(111)    
+    plot.imshow(DiffractionPicture.color_matrix, cmap = 'hot')
+    
+    fig.suptitle('Дифракционная картина')
+    #fig.colorbar(plot)
+    
+    plot.set_xticks(np.linspace(0,
+                                  DiffractionPicture.color_grid_size, 11))
+    
+    plot.set_xticklabels(np.linspace((-DiffractionPicture.color_grid_size/2000) *
+                                       DiffractionPicture.pixel_len_diff,
+                                       DiffractionPicture.color_grid_size/2000 *
+                                       DiffractionPicture.pixel_len_diff,
+                                       11), fontsize = 8, rotation = 0)
+    plot.set_yticks(np.linspace(0,
+                                  DiffractionPicture.color_grid_size,
+                                  11))
+    
+    plot.set_yticklabels(np.linspace((-DiffractionPicture.color_grid_size/2000) *
+                                       DiffractionPicture.pixel_len_diff,
+                                       DiffractionPicture.color_grid_size/2000 *
+                                       DiffractionPicture.pixel_len_diff,
+                                       11), fontsize=8)
+    plot.set_xlabel('x, мм', fontsize = 10)
+    plot.set_ylabel('y, мм', fontsize = 10)
+    
+    plot.grid(False)
+    
+    return fig
